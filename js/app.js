@@ -9,16 +9,6 @@ var params = getHashParams(),
     currentCall = null,
     outboundCall = null;
 
-function getParameterByName(name, url) {
-    if (!url) url = window.location.href;
-    name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-        results = regex.exec(url);
-    if (!results) return null;
-    if (!results[2]) return '';
-    return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
-
 function getHashParams() {
   var hashParams = {};
   var e,
@@ -34,7 +24,7 @@ function getHashParams() {
 }
 
 function log(str) {
-  document.getElementById("log").innerHTML += str+"<br/>";
+  //document.getElementById("log").innerHTML += str+"<br/>";
 }
 
 // create VoxImplant instance
@@ -71,50 +61,11 @@ function onSdkReady(){
 
 // Connection with VoxImplant established
 function onConnectionEstablished() {
-  log("Connection established: "+voxAPI.connected());
-
-  // show authorization form
-  var $authForm = $('<div id="authForm">'+
-    '<form class="form-horizontal" role="form">'+
-    '<div class="form-group">'+
-      '<label for="inputUsername" class="col-sm-2 control-label">Username</label>'+
-      '<div class="col-sm-10">'+
-        '<input type="text" class="form-control" id="inputUsername" placeholder="Username">'+
-      '</div>'+
-    '</div>'+
-    '<div class="form-group">'+
-      '<label for="inputPassword" class="col-sm-2 control-label">Password</label>'+
-      '<div class="col-sm-10">'+
-        '<input type="password" class="form-control" id="inputPassword" placeholder="Password">'+
-      '</div>'+
-    '</div>'+
-    '<input type="submit" value="submit" class="hidden" />'+
-  '</form>'+
-  '</div>');
-
-  if (typeof username == 'undefined' || typeof password == 'undefined') {
-    dialog = new BootstrapDialog({
-      title: 'Authorization',
-      message: $authForm,
-      buttons: [{
-            label: 'Sign in',
-            action: function(dialog) {
-              $('#authForm form').submit();
-            }
-        }],
-      closable: false,
-      onshown: function(dialog) {            
-        $('#inputUsername').focus();
-        $('#authForm form').on('submit', function(e) {
-          username = $('#inputUsername').val();
-          password = $('#inputPassword').val();
-          login();
-          e.preventDefault();
-        });
-      }
-    });
-    dialog.open();                 
-  } else login();
+  login();
+  var me3 = getParameterByName('user');
+  if(me3 === 'user2'){
+    createCall('user1');
+  }
 }
 
 // Login function
@@ -186,7 +137,7 @@ function onCallConnected(e) {
     // For WebRTC just using JS/CSS for transformation
     $video = $(document.getElementById(currentCall.getVideoElementId()));
     $video.appendTo('#voximplant_container');
-    $video.css('margin-left', '10px').css('width', '320px').css('height', '240px').css('float', 'left');
+    //$video.css('margin-left', '10px').css('width', '320px').css('height', '240px').css('float', 'left');
     $video[0].play();
   }
 }
@@ -254,14 +205,15 @@ function onProgressToneStop(e) {
 }
 
 // Create outbound call
-function createCall() {
+function createCall(cid) {
+  var toCall = cid || document.getElementById('phonenum').value;
   $('#callButton').replaceWith('<button type="button" class="btn btn-danger" id="cancelButton">Cancel</button>');
   $('#callButton').remove();
   $('#cancelButton').click(function() {
     currentCall.hangup();
   });
-  log("Calling to "+document.getElementById('phonenum').value);
-  outboundCall = currentCall = voxAPI.call(document.getElementById('phonenum').value, true, "TEST CUSTOM DATA", {"X-DirectCall": "true"});
+  log("Calling to "+toCall);
+  outboundCall = currentCall = voxAPI.call(toCall, true, "TEST CUSTOM DATA", {"X-DirectCall": "true"});
   currentCall.addEventListener(VoxImplant.CallEvents.Connected, onCallConnected);
   currentCall.addEventListener(VoxImplant.CallEvents.Disconnected, onCallDisconnected);
   currentCall.addEventListener(VoxImplant.CallEvents.Failed, onCallFailed);
