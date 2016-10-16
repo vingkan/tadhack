@@ -7,10 +7,11 @@ var db = firebase.database();
 var SECRET = ['T', 'A', 'D'];
 var WIDTH = 4;
 var HEIGHT = 10;
-var TILES = 6;
+var PATTERN = 6;
+var TILES = {};
 
 function getRandomCoordinate(){
-	//TODO
+	//TODO: Validate Coordinate
 	return {
 		x: Math.floor(WIDTH * Math.random()),
 		y: Math.floor(HEIGHT * Math.random())
@@ -66,7 +67,7 @@ function placePattern(grid, secret){
 	var coord = getRandomCoordinate();
 	grid[coord.x][coord.y] = secretTile;
 	var placed = 1;
-	while(placed < TILES){
+	while(placed < PATTERN){
 		newCoord = getRandomAdjacentCoordinate(coord);
 		if(checkGrid(grid, newCoord).type === 'EMPTY'){
 			coord = newCoord;
@@ -137,12 +138,23 @@ function checkUnlocked(grid, order){
 			}
 		}
 	}
-	if(tilesUnlocked.length === TILES){
+	if(tilesUnlocked.length === TILES[order]){
 		for(var t = 0; t < tilesUnlocked.length; t++){
 			var tX = tilesUnlocked[t].x;
 			var tY = tilesUnlocked[t].y;
 			db.ref('board/' + tX + '/' + tY + '/unlocked').set(true);
+			HINT = true;
+			giveClue(grid);
 		}
+	}
+}
+
+var FOULS = 0;
+
+function foul(){
+	FOULS++;
+	if(FOULS > 2){
+		resetBoard();
 	}
 }
 
@@ -160,11 +172,15 @@ function clickCell(x, y){
 				checkUnlocked(GRID, lastOrder);
 			}
 		}
+		if(GRID[x][y].type === 'EMPTY'){
+			foul();
+		}
 		lastCell = {x: x, y: y};
 	}
 }
 
 window.GRID = false;
+var HINT = true;
 
 function gridToHTML(grid, id){
 	var table = '<table>';
@@ -191,6 +207,10 @@ function gridToHTML(grid, id){
 					if(!isP1() && cell.highlighted){
 						cellClass += ' highlighted';
 					}
+					if(isP1() && cell.hinted && HINT){
+						cellClass += ' hinted';
+						HINT = false; // SUPER DIRTY FIX
+					}
 				}
 			}
 			row += '<td onclick="clickCell('+x+','+y+');" class="' + cellClass + '">' + cellValue + '</td>';
@@ -204,7 +224,42 @@ function gridToHTML(grid, id){
 	window.GRID = grid;
 }
 
-function main(){
+function countCellsInGrid(grid, callback){
+	var count = 0;
+	for(var x = 0; x < grid.length; x++){
+		for(var y = 0; y < grid[x].length; y++){
+			var cell = grid[x][y];
+			if(callback(cell)){
+				count++;
+			}
+		}
+	}
+	return count;
+}
+
+function giveClue(grid){
+	/*var secrets = [];
+	for(var x = 0; x < grid.length; x++){
+		for(var y = 0; y < grid[x].length; y++){
+			var cell = grid[x][y];
+			if((cell.order || cell.order === 0) && !cell.hinted){
+				console.log(cell);
+				secrets.push({x: x, y: y});
+			}
+		}
+	}
+	if(secrets.length > 0){
+		var randomIndex = Math.floor(secrets.length * Math.random());
+		var coord = secrets[randomIndex];
+		console.log('before', countCellsInGrid(grid, function(cell){return cell.hinted}));
+		grid[coord.x][coord.y].hinted = true;
+		console.log('after', countCellsInGrid(grid, function(cell){return cell.hinted}));
+		console.log('hinted', randomIndex, coord)
+	}*/
+	return grid;
+}
+
+function resetBoard(){
 
 	if(isP1()){
 		var grid = createGrid(WIDTH, HEIGHT);
@@ -214,8 +269,17 @@ function main(){
 				order: s
 			});
 		}
+		for(var x = 0; x < grid.length; x++){
+			for(var y = 0; y < grid[x].length; y++){
+				var cell = grid[x][y];
+				if(cell.order || cell.order === 0){
+					TILES[cell.order] = TILES[cell.order] + 1 || 1;
+				}
+			}
+		}
 		printGrid(grid);
 		gridToHTML(grid, 'game-grid');
+		grid = giveClue(grid);
 		db.ref('board').set(grid);
 	}
 	else{
@@ -235,7 +299,7 @@ function main(){
 
 }
 
-main();
+resetBoard();
 
 function checkPasscode(){
 	var passed = true;

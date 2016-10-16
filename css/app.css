@@ -34,3 +34,7 @@ td {
 .highlighted {
   background: orange;
 }
+
+.hinted {
+  background: red;
+}
