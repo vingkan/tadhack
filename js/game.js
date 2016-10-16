@@ -4,6 +4,7 @@ window.isP1 = function(){
 
 var db = firebase.database();
 
+var SECRET = ['T', 'A', 'D'];
 var WIDTH = 4;
 var HEIGHT = 10;
 var TILES = 6;
@@ -146,19 +147,21 @@ function checkUnlocked(grid, order){
 }
 
 function clickCell(x, y){
-	var thisOrder = GRID[x][y].order;
-	db.ref('board/' + x + '/' + y + '/clicked').set(true);
-	highlightPatternByOrder(thisOrder);
-	if(lastCell){
-		var lastOrder = checkGrid(GRID, lastCell).order;
-		if(thisOrder !== lastOrder){
-			wipePatternByOrder(lastOrder);
+	if(isP1()){
+		var thisOrder = GRID[x][y].order;
+		db.ref('board/' + x + '/' + y + '/clicked').set(true);
+		highlightPatternByOrder(thisOrder);
+		if(lastCell){
+			var lastOrder = checkGrid(GRID, lastCell).order;
+			if(thisOrder !== lastOrder){
+				wipePatternByOrder(lastOrder);
+			}
+			else{
+				checkUnlocked(GRID, lastOrder);
+			}
 		}
-		else{
-			checkUnlocked(GRID, lastOrder);
-		}
+		lastCell = {x: x, y: y};
 	}
-	lastCell = {x: x, y: y};
 }
 
 window.GRID = false;
@@ -203,8 +206,6 @@ function gridToHTML(grid, id){
 
 function main(){
 
-	var SECRET = ['T', 'A', 'D'];
-
 	if(isP1()){
 		var grid = createGrid(WIDTH, HEIGHT);
 		for(var s = 0; s < SECRET.length; s++){
@@ -235,3 +236,17 @@ function main(){
 }
 
 main();
+
+function checkPasscode(){
+	var passed = true;
+	var passcode = document.getElementById('passcode').value;
+	for(var s = 0; s < SECRET.length; s++){
+		if(SECRET[s] !== passcode.charAt(s).toUpperCase()){
+			passed = false;
+			break;
+		}
+	}
+	if(passed){
+		alert('Congratulations, you passed!');
+	}
+}
