@@ -152,10 +152,10 @@ function checkUnlocked(grid, order){
 var FOULS = 0;
 
 function foul(){
-	FOULS++;
+	/*FOULS++;
 	if(FOULS > 2){
 		resetBoard();
-	}
+	}*/
 }
 
 function clickCell(x, y){

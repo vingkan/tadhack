@@ -2,19 +2,30 @@ html, body {
 
 }
 
-#voximplant_container {
+#game-grid{
+  width: 30vw;
+  height: 100vh;
+  display: inline-block;
+}
 
+#voximplant_container {
+  width: 50vw;
+  height: 100vh;
+  display: inline-block;
 }
 
 video {
   display: block;
   width: 320px;
   height: 240px;
+  /*position: absolute;
+  top: 0;
+  right: 0;*/
 }
 
 #voximplantlocalvideo {
   width: 320px;
-  height: 240px;
+  height: 320px;
 }
 
 td {
